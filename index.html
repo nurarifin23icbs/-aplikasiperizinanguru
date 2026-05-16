@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplikasi Perizinan Guru</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .tab-active { border-bottom: 3px solid; }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    .toast-show { animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto" style="background:linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 25%, #45B7D1 50%, #FFA502 75%, #FF6B6B 100%);background-size:200% 200%;animation:gradientShift 15s ease infinite;"><!-- Toast -->
+   <div id="toast" class="fixed top-4 right-4 z-50 hidden px-5 py-3 rounded-xl text-white text-sm font-semibold shadow-lg"></div><!-- Header -->
+   <header class="sticky top-0 z-40" style="background:linear-gradient(135deg,#00D9A3 0%,#00B894 100%);border-bottom:3px solid #FF6B6B;box-shadow:0 8px 32px rgba(0, 217, 163, 0.3);">
+    <div class="max-w-6xl mx-auto px-4 py-5">
+     <div class="flex items-center gap-3 mb-1">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style="background:linear-gradient(135deg,#FF6B6B,#FFA502);"><i data-lucide="graduation-cap" style="width:22px;height:22px;color:#fff;"></i>
+      </div>
+      <div>
+       <p class="text-sm font-bold" style="color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.1);margin-bottom:4px;">INSAN CENDEKIA BOARDING SCHOOL</p>
+       <h1 id="app-title" class="text-xl font-800 tracking-tight" style="color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.1);">Aplikasi Perizinan Guru</h1>
+       <p id="app-subtitle" class="text-xs font-medium" style="color:#e9ecef;">Sistem Pencatatan Izin &amp; Penggantian</p>
+      </div>
+     </div>
+    </div><!-- Tabs -->
+    <div class="max-w-6xl mx-auto px-4 flex gap-1"><button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all" style="color:#475569;"> <span class="flex items-center gap-1.5"><i data-lucide="activity" style="width:15px;height:15px;"></i> Dashboard</span> </button> <button onclick="switchTab('form')" id="tab-form" class="tab-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all tab-active" style="color:#3b82f6;border-color:#3b82f6;"> <span class="flex items-center gap-1.5"><i data-lucide="file-plus" style="width:15px;height:15px;"></i> Input Izin</span> </button> <button onclick="switchTab('piket')" id="tab-piket" class="tab-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all" style="color:#475569;"> <span class="flex items-center gap-1.5"><i data-lucide="user-check" style="width:15px;height:15px;"></i> Input Guru Pengganti</span> </button> <button onclick="switchTab('data')" id="tab-data" class="tab-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all" style="color:#475569;"> <span class="flex items-center gap-1.5"><i data-lucide="list" style="width:15px;height:15px;"></i> Data Izin</span> </button> <button onclick="switchTab('rekap')" id="tab-rekap" class="tab-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all" style="color:#475569;"> <span class="flex items-center gap-1.5"><i data-lucide="bar-chart-3" style="width:15px;height:15px;"></i> Rekap Pengganti</span> </button>
+    </div>
+   </header>
+   <main class="max-w-6xl mx-auto px-4 py-6"><!-- Dashboard Tab -->
+    <section id="view-dashboard" class="hidden fade-in">
+     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div class="rounded-2xl p-6 shadow-xl" style="background: linear-gradient(135deg, #00D9A3 0%, #00B894 100%); color: #fff;">
+       <div class="flex items-center justify-between mb-2"><span class="text-sm font-semibold opacity-90">Total Izin</span> <i data-lucide="file-text" style="width:20px;height:20px;opacity:0.7;"></i>
+       </div>
+       <div id="stat-total-izin" class="text-4xl font-bold">
+        0
+       </div>
+       <p class="text-xs mt-2 opacity-80">Seluruh data perizinan</p>
+      </div>
+      <div class="rounded-2xl p-6 shadow-xl" style="background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); color: #fff;">
+       <div class="flex items-center justify-between mb-2"><span class="text-sm font-semibold opacity-90">Belum Piket</span> <i data-lucide="clock" style="width:20px;height:20px;opacity:0.7;"></i>
+       </div>
+       <div id="stat-pending" class="text-4xl font-bold">
+        0
+       </div>
+       <p class="text-xs mt-2 opacity-80">Menunggu pengisian</p>
+      </div>
+      <div class="rounded-2xl p-6 shadow-xl" style="background: linear-gradient(135deg, #00A8E8 0%, #0088C4 100%); color: #fff;">
+       <div class="flex items-center justify-between mb-2"><span class="text-sm font-semibold opacity-90">Sudah Piket</span> <i data-lucide="check-circle" style="width:20px;height:20px;opacity:0.7;"></i>
+       </div>
+       <div id="stat-completed" class="text-4xl font-bold">
+        0
+       </div>
+       <p class="text-xs mt-2 opacity-80">Sudah diisi pengganti</p>
+      </div>
+     </div>
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="rounded-2xl p-6 shadow-xl" style="background: #1e293b; border: 1px solid #334155;">
+       <h3 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: #00D9A3;"><i data-lucide="calendar" style="width:18px;height:18px;"></i> <span>Izin 7 Hari Terakhir</span></h3>
+       <div id="chart-recent" class="space-y-3"></div>
+      </div>
+      <div class="rounded-2xl p-6 shadow-xl" style="background: #1e293b; border: 1px solid #334155;">
+       <h3 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: #00A8E8;"><i data-lucide="trending-up" style="width:18px;height:18px;"></i> <span>Top 5 Guru Pengganti</span></h3>
+       <div id="chart-top-teachers" class="space-y-3"></div>
+      </div>
+     </div>
+     <div class="rounded-2xl p-6 shadow-xl" style="background: #1e293b; border: 1px solid #334155;">
+      <h3 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: #FF6B6B;"><i data-lucide="list" style="width:18px;height:18px;"></i> <span>Daftar Izin Terbaru</span></h3>
+      <div id="dashboard-latest-list" class="space-y-3 max-h-96 overflow-y-auto"></div>
+     </div>
+    </section>
+    <section id="view-form" class="fade-in">
+     <div class="rounded-2xl p-6 md:p-8 shadow-2xl" style="background:#1e293b;border:3px solid #334155;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+      <h2 class="text-lg font-bold mb-6 flex items-center gap-2" style="color:#00D9A3;font-weight:900;text-transform:uppercase;letter-spacing:0.5px;"><i data-lucide="clipboard-edit" style="width:20px;height:20px;color:#00D9A3;"></i> Pendaftaran Izin Guru</h2>
+      <p class="text-xs font-medium mb-5 px-4 py-3 rounded-lg" style="background:#065f4620;color:#10b981;">ℹ️ Isilah form ini untuk mendaftarkan guru yang sedang izin. Data guru pengganti akan diisi oleh guru piket di tab Input Piket setelah Anda menyimpan data ini.</p>
+      <form id="izin-form" class="grid md:grid-cols-2 gap-5">
+       <div><label for="guru_izin" class="block text-sm font-semibold mb-1.5" style="color:#667EEA;">Nama Guru yang Izin</label> <input type="text" id="guru_izin" required placeholder="Masukkan nama guru" class="w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-offset-2" style="background:#fff;color:#333;border:2px solid #FFB3B3;">
+       </div>
+       <div><label for="tanggal" class="block text-sm font-semibold mb-1.5" style="color:#667EEA;">Tanggal Izin</label> <input type="date" id="tanggal" required class="w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-offset-2" style="background:#fff;color:#333;border:2px solid #FFB3B3;">
+       </div>
+       <div class="md:col-span-2"><label for="alasan_izin" class="block text-sm font-semibold mb-1.5" style="color:#667EEA;">Alasan Izin</label> <textarea id="alasan_izin" required rows="2" placeholder="Jelaskan alasan izin" class="w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none resize-none transition-all focus:ring-2 focus:ring-offset-2" style="background:#fff;color:#333;border:2px solid #FFB3B3;"></textarea>
+       </div>
+       <div><label for="kelas_mengajar" class="block text-sm font-semibold mb-1.5" style="color:#667EEA;">Kelas Mengajar</label> <input type="text" id="kelas_mengajar" required placeholder="Contoh: X IPA 1" class="w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-offset-2" style="background:#fff;color:#333;border:2px solid #FFB3B3;">
+       </div>
+       <div><label for="jam_mengajar" class="block text-sm font-semibold mb-1.5" style="color:#667EEA;">Jam Mengajar</label> <select id="jam_mengajar" required class="w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-offset-2" style="background:#fff;color:#333;border:2px solid #FFB3B3;"> <option value="">-- Pilih Jam Mengajar --</option> <option value="Jam 1-2">Jam 1-2</option> <option value="Jam 3-4">Jam 3-4</option> <option value="Jam 5-6">Jam 5-6</option> <option value="Jam 7-8">Jam 7-8</option> </select>
+       </div>
+       <div><label for="tugas_ditinggalkan" class="block text-sm font-semibold mb-1.5" style="color:#667EEA;">Tugas yang Ditinggalkan</label> <input type="text" id="tugas_ditinggalkan" required placeholder="Tugas/materi yang harus dikerjakan" class="w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-offset-2" style="background:#fff;color:#333;border:2px solid #FFB3B3;">
+       </div>
+       <div class="md:col-span-2 flex justify-end pt-2"><button type="submit" id="btn-submit" class="px-8 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105" style="background:linear-gradient(135deg,#FF6B6B,#FF8A8A);color:#fff;"> <i data-lucide="save" style="width:16px;height:16px;"></i> <span id="btn-submit-text">Simpan Data</span> </button>
+       </div>
+      </form>
+     </div>
+    </section><!-- Piket Tab -->
+    <section id="view-piket" class="hidden fade-in">
+     <div class="rounded-2xl p-6 md:p-8" style="background:#1e293b;border:1px solid #334155;">
+      <h2 class="text-lg font-bold mb-6 flex items-center gap-2" style="color:#00D9A3;font-weight:900;text-transform:uppercase;letter-spacing:0.5px;"><i data-lucide="user-check" style="width:20px;height:20px;color:#00D9A3;"></i> Form Input Guru Pengganti</h2>
+      <p class="text-xs font-medium mb-5 px-4 py-3 rounded-lg" style="background:#065f4620;color:#10b981;">✓ Pilih data izin dan isi guru pengganti serta tindakan yang dilakukan</p>
+      <div id="piket-list" class="space-y-4">
+       <div class="text-center py-12"><i data-lucide="inbox" style="width:40px;height:40px;color:#4ECDC4;margin:0 auto 12px;display:block;"></i>
+        <p class="text-sm font-semibold" style="color:#16a34a;">Belum ada data izin</p>
+        <p class="text-xs mt-1" style="color:#16a34a;">Tambahkan data di tab Input Izin terlebih dahulu</p>
+       </div>
+      </div>
+     </div>
+    </section>
+    <section id="view-data" class="hidden fade-in">
+     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+      <h2 class="text-lg font-bold flex items-center gap-2" style="color:#00A8E8;font-weight:900;text-transform:uppercase;letter-spacing:0.5px;"><i data-lucide="database" style="width:20px;height:20px;color:#00A8E8;"></i> Data Perizinan</h2>
+      <div class="relative w-full sm:w-64"><i data-lucide="search" style="width:16px;height:16px;color:#0891b2;position:absolute;left:12px;top:50%;transform:translateY(-50%);"></i> <input type="text" id="search-input" placeholder="Cari guru..." oninput="renderDataList()" class="w-full pl-10 pr-4 py-2 rounded-xl text-sm font-medium outline-none" style="background:#fff;color:#333;border:2px solid #06B6D4;box-shadow:0 2px 8px rgba(6,182,212,0.1);">
+      </div>
+     </div>
+     <div id="data-count" class="text-xs font-medium mb-3" style="color:#0891b2;"></div>
+     <div id="data-list" class="space-y-3"></div>
+     <div id="data-empty" class="hidden text-center py-16"><i data-lucide="inbox" style="width:48px;height:48px;color:#06B6D4;margin:0 auto 12px;display:block;"></i>
+      <p class="text-sm font-semibold" style="color:#0891b2;">Belum ada data perizinan</p>
+      <p class="text-xs mt-1" style="color:#06B6D4;">Mulai dengan menambahkan data di tab Input Izin</p>
+     </div>
+    </section><!-- Rekap Tab -->
+    <section id="view-rekap" class="hidden fade-in">
+     <h2 class="text-lg font-bold flex items-center gap-2 mb-4" style="color:#FF1744;font-weight:900;text-transform:uppercase;letter-spacing:0.5px;"><i data-lucide="bar-chart-3" style="width:20px;height:20px;color:#FF1744;"></i> Rekap Guru Pengganti</h2>
+     <div id="rekap-list" class="space-y-3"></div>
+     <div id="rekap-empty" class="hidden text-center py-16"><i data-lucide="users" style="width:48px;height:48px;color:#334155;margin:0 auto 12px;display:block;"></i>
+      <p class="text-sm font-semibold" style="color:#475569;">Belum ada data rekap</p>
+     </div>
+    </section>
+   </main><!-- Delete Confirmation Modal -->
+   <div id="delete-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.6);">
+    <div class="rounded-2xl p-6 mx-4 max-w-sm w-full" style="background:#1e293b;border:1px solid #334155;">
+     <h3 class="text-base font-bold mb-2" style="color:#f1f5f9;">Hapus Data?</h3>
+     <p class="text-sm mb-5" style="color:#94a3b8;">Data yang dihapus tidak dapat dikembalikan.</p>
+     <div class="flex gap-3 justify-end"><button onclick="closeDeleteModal()" class="px-4 py-2 rounded-xl text-sm font-semibold" style="background:#334155;color:#94a3b8;">Batal</button> <button id="btn-confirm-delete" class="px-4 py-2 rounded-xl text-sm font-semibold" style="background:#ef4444;color:#fff;">Hapus</button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+  let allData = [];
+  let deleteTarget = null;
+
+  const defaultConfig = {
+    app_title: 'Aplikasi Perizinan Guru',
+    subtitle_text: 'Sistem Pencatatan Izin & Penggantian',
+    background_color: '#0f172a',
+    surface_color: '#1e293b',
+    text_color: '#f1f5f9',
+    accent_color: '#3b82f6',
+    muted_color: '#94a3b8',
+    font_family: 'Plus Jakarta Sans',
+    font_size: 14
+  };
+
+  // Element SDK
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => {
+      const t = (k) => config[k] || defaultConfig[k];
+      document.getElementById('app-title').textContent = t('app_title');
+      document.getElementById('app-subtitle').textContent = t('subtitle_text');
+      const bg = t('background_color');
+      const surface = t('surface_color');
+      const text = t('text_color');
+      const accent = t('accent_color');
+      const muted = t('muted_color');
+      const font = t('font_family');
+      const size = config.font_size || defaultConfig.font_size;
+
+      document.getElementById('app').style.background = bg;
+      document.querySelectorAll('h1,h2,h3').forEach(el => { el.style.color = text; el.style.fontFamily = `${font}, sans-serif`; });
+      document.querySelectorAll('p,span,label,input,textarea,td,th').forEach(el => el.style.fontFamily = `${font}, sans-serif`);
+      document.getElementById('app-title').style.fontSize = `${size * 1.5}px`;
+      document.getElementById('app-subtitle').style.fontSize = `${size * 0.78}px`;
+
+      document.querySelectorAll('input,textarea').forEach(el => { el.style.background = bg; el.style.color = text; });
+      document.querySelectorAll('.tab-active').forEach(el => { el.style.color = accent; el.style.borderColor = accent; });
+      document.getElementById('btn-submit').style.background = accent;
+
+      renderDashboard();
+      renderDataList();
+      renderRekap();
+    },
+    mapToCapabilities: (config) => {
+      const c = (key) => ({
+        get: () => config[key] || defaultConfig[key],
+        set: (v) => { config[key] = v; window.elementSdk.setConfig({ [key]: v }); }
+      });
+      return {
+        recolorables: [c('background_color'), c('surface_color'), c('text_color'), c('accent_color'), c('muted_color')],
+        borderables: [],
+        fontEditable: c('font_family'),
+        fontSizeable: c('font_size')
+      };
+    },
+    mapToEditPanelValues: (config) => new Map([
+      ['app_title', config.app_title || defaultConfig.app_title],
+      ['subtitle_text', config.subtitle_text || defaultConfig.subtitle_text]
+    ])
+  });
+
+  // Data SDK
+  const dataHandler = {
+    onDataChanged(data) {
+      allData = data;
+      renderDashboard();
+      renderDataList();
+      renderRekap();
+    }
+  };
+  (async () => {
+    const r = await window.dataSdk.init(dataHandler);
+    if (!r.isOk) console.error('Data SDK init failed');
+  })();
+
+  // Dashboard
+  function renderDashboard() {
+    const total = allData.length;
+    const pending = allData.filter(d => !d.is_piket_filled).length;
+    const completed = allData.filter(d => d.is_piket_filled).length;
+
+    document.getElementById('stat-total-izin').textContent = total;
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-completed').textContent = completed;
+
+    // Chart: Recent 7 days
+    const last7Days = {};
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const key = date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+      last7Days[key] = 0;
+    }
+    allData.forEach(d => {
+      if (d.tanggal) {
+        const date = new Date(d.tanggal);
+        const key = date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+        if (key in last7Days) last7Days[key]++;
+      }
+    });
+
+    const chartRecent = document.getElementById('chart-recent');
+    chartRecent.innerHTML = Object.entries(last7Days).map(([date, count]) => `
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-semibold w-12" style="color: #94a3b8;">${date}</span>
+        <div class="flex-1 bg-slate-700 rounded-lg h-8 flex items-center px-2" style="width: ${Math.max(count * 15, 20)}px;">
+          <span class="text-xs font-bold text-white">${count}</span>
+        </div>
+      </div>
+    `).join('');
+
+    // Chart: Top teachers
+    const teacherCount = {};
+    allData.filter(d => d.guru_pengganti).forEach(d => {
+      teacherCount[d.guru_pengganti] = (teacherCount[d.guru_pengganti] || 0) + 1;
+    });
+    const topTeachers = Object.entries(teacherCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+    const chartTop = document.getElementById('chart-top-teachers');
+    chartTop.innerHTML = topTeachers.length > 0 ? topTeachers.map(([name, count], idx) => {
+      const colors = ['#00D9A3', '#4ECDC4', '#00A8E8', '#FF6B6B', '#FFA502'];
+      const color = colors[idx % colors.length];
+      return `
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-semibold flex-1" style="color: #94a3b8;">${name.substring(0, 20)}</span>
+          <div class="flex items-center gap-1">
+            <div class="bg-slate-700 rounded h-6 flex items-center px-2" style="width: ${Math.max(count * 20, 30)}px;">
+              <span class="text-xs font-bold" style="color: ${color};">${count}x</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('') : '<p style="color: #94a3b8; text-align: center; padding: 20px 0;">Belum ada data</p>';
+
+    // Latest list
+    const latest = allData.sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || '')).slice(0, 10);
+    const dashboardList = document.getElementById('dashboard-latest-list');
+    dashboardList.innerHTML = latest.map(d => `
+      <div class="rounded-lg p-4" style="background: #334155; border-left: 4px solid ${d.is_piket_filled ? '#00D9A3' : '#FFA502'};">
+        <div class="flex items-start justify-between mb-2">
+          <div>
+            <div style="color: #f1f5f9; font-weight: 600;">${esc(d.guru_izin)}</div>
+            <div style="color: #94a3b8; font-size: 12px;">${esc(d.kelas_mengajar)} • ${formatDate(d.tanggal)}</div>
+          </div>
+          <span class="px-2 py-1 rounded text-xs font-bold" style="background: ${d.is_piket_filled ? '#00D9A320' : '#FFA50220'}; color: ${d.is_piket_filled ? '#00D9A3' : '#FFA502'};">
+            ${d.is_piket_filled ? '✓ Selesai' : '⏳ Pending'}
+          </span>
+        </div>
+      </div>
+    `).join('');
+
+    lucide.createIcons();
+  }
+
+  // Tabs
+  function switchTab(tab) {
+    ['dashboard','form','piket','data','rekap'].forEach(t => {
+      document.getElementById('view-' + t).classList.toggle('hidden', t !== tab);
+      const btn = document.getElementById('tab-' + t);
+      const cfg = window.elementSdk.config || defaultConfig;
+      const accent = cfg.accent_color || defaultConfig.accent_color;
+      if (t === tab) {
+        btn.classList.add('tab-active');
+        btn.style.color = accent;
+        btn.style.borderColor = accent;
+      } else {
+        btn.classList.remove('tab-active');
+        btn.style.color = '#475569';
+        btn.style.borderColor = 'transparent';
+      }
+    });
+    if (tab === 'piket') renderPiketList();
+    lucide.createIcons();
+  }
+
+  // Form
+  document.getElementById('izin-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (allData.length >= 999) {
+      showToast('Batas maksimum 999 data tercapai!', '#ef4444');
+      return;
+    }
+    const btn = document.getElementById('btn-submit');
+    const btnText = document.getElementById('btn-submit-text');
+    btn.disabled = true; btnText.textContent = 'Menyimpan...';
+
+    const record = {
+      guru_izin: document.getElementById('guru_izin').value.trim(),
+      alasan_izin: document.getElementById('alasan_izin').value.trim(),
+      jam_mengajar: document.getElementById('jam_mengajar').value.trim(),
+      kelas_mengajar: document.getElementById('kelas_mengajar').value.trim(),
+      tugas_ditinggalkan: document.getElementById('tugas_ditinggalkan').value.trim(),
+      guru_pengganti: '',
+      kelas_pengganti: '',
+      tindakan_pengganti: '',
+      tanggal: document.getElementById('tanggal').value,
+      status: 'aktif',
+      is_piket_filled: false
+    };
+
+    const result = await window.dataSdk.create(record);
+    btn.disabled = false; btnText.textContent = 'Simpan Data';
+    if (result.isOk) {
+      e.target.reset();
+      document.getElementById('tanggal').valueAsDate = new Date();
+      showToast('Data berhasil disimpan!', '#22c55e');
+    } else {
+      showToast('Gagal menyimpan data', '#ef4444');
+    }
+  });
+
+  // Render piket list
+  function renderPiketList() {
+    const container = document.getElementById('piket-list');
+    const cfg = window.elementSdk.config || defaultConfig;
+    const surface = cfg.surface_color || defaultConfig.surface_color;
+    const text = cfg.text_color || defaultConfig.text_color;
+    const accent = cfg.accent_color || defaultConfig.accent_color;
+    const muted = cfg.muted_color || defaultConfig.muted_color;
+    const bg = cfg.background_color || defaultConfig.background_color;
+
+    // Filter data yang belum diisi piket
+    const unfinished = allData.filter(d => !d.is_piket_filled).sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
+
+    if (unfinished.length === 0) {
+      container.innerHTML = `<div class="text-center py-12"><i data-lucide="check-circle" style="width:40px;height:40px;color:#10b981;margin:0 auto 12px;display:block;"></i>
+          <p class="text-sm font-semibold" style="color:#10b981;">Semua data sudah diisi</p>
+          <p class="text-xs mt-1" style="color:#64748b;">Tidak ada izin yang menunggu pengisian guru pengganti</p>
+        </div>`;
+      lucide.createIcons();
+      return;
+    }
+
+    container.innerHTML = '';
+    unfinished.forEach(record => {
+      const card = document.createElement('div');
+      card.className = 'rounded-xl p-5 fade-in';
+      card.style.background = surface;
+      card.style.border = `1px solid #334155`;
+      card.innerHTML = `
+        <div class="mb-4 pb-4" style="border-bottom:1px solid #334155;">
+          <div class="text-sm font-bold mb-1" style="color:${text};">${esc(record.guru_izin)} • ${esc(record.kelas_mengajar)}</div>
+          <div class="text-xs" style="color:${muted};">${formatDate(record.tanggal)} • ${esc(record.jam_mengajar)}</div>
+          <div class="text-xs mt-2 px-2 py-1 rounded" style="background:${bg};color:${accent};">Alasan: ${esc(record.alasan_izin)} | Tugas: ${esc(record.tugas_ditinggalkan)}</div>
+        </div>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold mb-1.5" style="color:${muted};">Guru Pengganti</label>
+            <input type="text" id="pengganti-${record.__backendId}" value="${esc(record.guru_pengganti)}" placeholder="Nama guru pengganti" class="w-full px-3 py-2 rounded-lg text-sm font-medium outline-none" style="background:${bg};color:${text};border:1px solid #334155;">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1.5" style="color:${muted};">Tindakan yang Dilakukan</label>
+            <textarea id="tindakan-${record.__backendId}" placeholder="Apa yang dilakukan guru pengganti" rows="2" class="w-full px-3 py-2 rounded-lg text-sm font-medium outline-none resize-none" style="background:${bg};color:${text};border:1px solid #334155;">${esc(record.tindakan_pengganti)}</textarea>
+          </div>
+          <button onclick="savePiketData('${record.__backendId}')" class="w-full px-4 py-2 rounded-lg text-sm font-bold transition-all" style="background:${accent};color:#fff;">
+            <i data-lucide="save" style="width:14px;height:14px;display:inline;margin-right:6px;"></i> Simpan
+          </button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+    lucide.createIcons();
+  }
+
+  // Save piket data
+  async function savePiketData(recordId) {
+    const record = allData.find(d => d.__backendId === recordId);
+    if (!record) return;
+
+    const guruPengganti = document.getElementById(`pengganti-${recordId}`).value.trim();
+    const tindakan = document.getElementById(`tindakan-${recordId}`).value.trim();
+
+    if (!guruPengganti || !tindakan) {
+      showToast('Mohon isi semua field', '#ef4444');
+      return;
+    }
+
+    record.guru_pengganti = guruPengganti;
+    record.tindakan_pengganti = tindakan;
+    record.is_piket_filled = true;
+
+    const result = await window.dataSdk.update(record);
+    if (result.isOk) {
+      showToast('Data guru pengganti berhasil disimpan!', '#4ECDC4');
+      renderPiketList();
+    } else {
+      showToast('Gagal menyimpan data', '#ef4444');
+    }
+  }
+  function renderDataList() {
+    const container = document.getElementById('data-list');
+    const empty = document.getElementById('data-empty');
+    const countEl = document.getElementById('data-count');
+    const query = (document.getElementById('search-input')?.value || '').toLowerCase();
+    const cfg = window.elementSdk.config || defaultConfig;
+    const surface = cfg.surface_color || defaultConfig.surface_color;
+    const text = cfg.text_color || defaultConfig.text_color;
+    const accent = cfg.accent_color || defaultConfig.accent_color;
+    const muted = cfg.muted_color || defaultConfig.muted_color;
+
+    const filtered = allData.filter(d =>
+      (d.guru_izin || '').toLowerCase().includes(query) ||
+      (d.guru_pengganti || '').toLowerCase().includes(query) ||
+      (d.kelas_mengajar || '').toLowerCase().includes(query)
+    ).sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
+
+    countEl.textContent = `Menampilkan ${filtered.length} dari ${allData.length} data`;
+
+    if (filtered.length === 0) {
+      container.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+
+    const existingMap = new Map([...container.children].map(el => [el.dataset.id, el]));
+    const newIds = new Set(filtered.map(d => d.__backendId));
+
+    existingMap.forEach((el, id) => { if (!newIds.has(id)) el.remove(); });
+
+    filtered.forEach((d, i) => {
+      let card = container.querySelector(`[data-id="${d.__backendId}"]`);
+      if (!card) {
+        card = document.createElement('div');
+        card.dataset.id = d.__backendId;
+        card.className = 'rounded-xl p-5 fade-in';
+        container.appendChild(card);
+      }
+      card.style.background = '#fff';
+      card.style.border = `2px solid #06B6D4`;
+      card.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+          <div>
+            <span class="text-base font-bold" style="color:#0891b2;">${esc(d.guru_izin)}</span>
+            <span class="text-xs font-medium ml-2 px-2 py-0.5 rounded-full" style="background:#06B6D420;color:#0891b2;">${esc(d.kelas_mengajar)}</span>
+            <span class="text-xs font-medium ml-1 px-2 py-0.5 rounded-full" style="background:#06B6D420;color:#0891b2;">🕐 ${esc(d.jam_mengajar)}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-medium" style="color:#0891b2;">${formatDate(d.tanggal)}</span>
+            <button onclick="openDeleteModal('${d.__backendId}')" class="p-1.5 rounded-lg transition-all hover:opacity-80" style="background:#ef444420;color:#ef4444;">
+              <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+            </button>
+          </div>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-3 text-xs">
+          <div class="rounded-lg p-3" style="background:#E0F9F0; border-left: 3px solid #06B6D4;">
+            <span class="font-semibold block mb-1" style="color:#0891b2;">Alasan Izin</span>
+            <span style="color:#16a34a;">${esc(d.alasan_izin)}</span>
+          </div>
+          <div class="rounded-lg p-3" style="background:#E0F9F0; border-left: 3px solid #06B6D4;">
+            <span class="font-semibold block mb-1" style="color:#0891b2;">Tugas Ditinggalkan</span>
+            <span style="color:#16a34a;">${esc(d.tugas_ditinggalkan)}</span>
+          </div>
+          <div class="rounded-lg p-3" style="background:#FFF0F5; border-left: 3px solid #FF6B6B;">
+            <span class="font-semibold block mb-1" style="color:#0891b2;">Guru Pengganti</span>
+            <span class="font-bold" style="color:#FF6B6B;">${esc(d.guru_pengganti)}</span>
+          </div>
+          <div class="rounded-lg p-3" style="background:#FFF0F5; border-left: 3px solid #FF6B6B;">
+            <span class="font-semibold block mb-1" style="color:#0891b2;">Kelas Pengganti</span>
+            <span style="color:#d4574e;">${esc(d.kelas_pengganti)}</span>
+          </div>
+          <div class="rounded-lg p-3 sm:col-span-2" style="background:#FFF0F5; border-left: 3px solid #FF6B6B;">
+            <span class="font-semibold block mb-1" style="color:#0891b2;">Tindakan Pengganti</span>
+            <span style="color:#d4574e;">${esc(d.tindakan_pengganti)}</span>
+          </div>
+        </div>
+      `;
+    });
+    lucide.createIcons();
+  }
+
+  // Rekap
+  function renderRekap() {
+    const container = document.getElementById('rekap-list');
+    const empty = document.getElementById('rekap-empty');
+    const cfg = window.elementSdk.config || defaultConfig;
+    const text = cfg.text_color || defaultConfig.text_color;
+    const accent = cfg.accent_color || defaultConfig.accent_color;
+    const muted = cfg.muted_color || defaultConfig.muted_color;
+    const bg = cfg.background_color || defaultConfig.background_color;
+
+    const rekapMap = {};
+    const monthMap = {};
+    
+    allData.forEach(d => {
+      const name = (d.guru_pengganti || '').trim();
+      if (!name) return;
+      if (!rekapMap[name]) rekapMap[name] = [];
+      rekapMap[name].push(d);
+      
+      const monthKey = d.tanggal ? new Date(d.tanggal).toLocaleString('id-ID', { month: 'long', year: 'numeric' }) : 'Tidak Ada Tanggal';
+      if (!monthMap[name]) monthMap[name] = {};
+      monthMap[name][monthKey] = (monthMap[name][monthKey] || 0) + 1;
+    });
+
+    const entries = Object.entries(rekapMap).sort((a, b) => b[1].length - a[1].length);
+
+    if (entries.length === 0) {
+      container.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+    container.innerHTML = '';
+
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+
+    entries.forEach(([name, records], idx) => {
+      const color = colors[idx % colors.length];
+      const bulanData = monthMap[name] || {};
+      const bulanList = Object.entries(bulanData).sort().reverse();
+      
+      const card = document.createElement('div');
+      card.className = 'rounded-2xl p-6 shadow-lg fade-in';
+      card.style.background = `linear-gradient(135deg, ${color}15 0%, ${color}08 100%)`;
+      card.style.border = `2px solid ${color}40`;
+      card.innerHTML = `
+        <div class="flex items-center justify-between mb-5 pb-4" style="border-bottom: 2px solid ${color}30;">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-base text-white shadow-lg" style="background: linear-gradient(135deg, ${color} 0%, ${color}cc 100%);">
+              ${name.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div class="font-bold text-lg" style="color:${color};">${esc(name)}</div>
+              <div class="text-sm" style="color:${color};">Total: ${records.length} kali menggantikan</div>
+            </div>
+          </div>
+          <span class="px-4 py-2 rounded-full text-sm font-bold text-white shadow-md" style="background: linear-gradient(135deg, ${color} 0%, ${color}cc 100%);">${records.length}x</span>
+        </div>
+        
+        <div class="mb-5">
+          <div class="text-xs font-bold mb-3 text-center" style="color:${color}; text-transform: uppercase; letter-spacing: 0.5px;">Rekap Per Bulan</div>
+          <div class="flex flex-wrap gap-2 justify-center">
+            ${bulanList.map(([bulan, count]) => `
+              <div class="px-3 py-2 rounded-lg text-xs font-semibold text-white shadow-md" style="background: linear-gradient(135deg, ${color} 0%, ${color}cc 100%);">
+                ${bulan}: <span class="font-bold">${count}x</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        
+        <div>
+          <div class="text-xs font-bold mb-3 text-center" style="color:${color}; text-transform: uppercase; letter-spacing: 0.5px;">Detail Penggantian</div>
+          <div class="space-y-2 max-h-48 overflow-y-auto">
+            ${records.map(r => `
+              <div class="rounded-lg p-3 text-xs" style="background:#fff; border-left: 3px solid ${color}; box-shadow: 0 2px 4px ${color}15;">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                  <span class="font-bold" style="color:${color};">📌 ${esc(r.guru_izin)}</span>
+                  <span style="color:#666;">• ${esc(r.kelas_mengajar)}</span>
+                  <span style="color:#999;">• ${formatDate(r.tanggal)}</span>
+                </div>
+                <div class="mt-2 px-2 py-1 rounded" style="background:${color}15; color:${color}; font-weight: 600;">
+                  ✓ ${esc(r.tindakan_pengganti)}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+    lucide.createIcons();
+  }
+
+  // Delete
+  function openDeleteModal(id) {
+    deleteTarget = allData.find(d => d.__backendId === id);
+    if (!deleteTarget) return;
+    document.getElementById('delete-modal').classList.remove('hidden');
+    document.getElementById('delete-modal').style.display = 'flex';
+  }
+  function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.add('hidden');
+    document.getElementById('delete-modal').style.display = 'none';
+    deleteTarget = null;
+  }
+  document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
+    if (!deleteTarget) return;
+    const btn = document.getElementById('btn-confirm-delete');
+    btn.disabled = true; btn.textContent = 'Menghapus...';
+    const result = await window.dataSdk.delete(deleteTarget);
+    btn.disabled = false; btn.textContent = 'Hapus';
+    closeDeleteModal();
+    showToast(result.isOk ? 'Data berhasil dihapus!' : 'Gagal menghapus data', result.isOk ? '#22c55e' : '#ef4444');
+  });
+
+  // Toast
+  function showToast(msg, color) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = color;
+    t.classList.remove('hidden');
+    t.classList.add('toast-show');
+    setTimeout(() => { t.classList.add('hidden'); t.classList.remove('toast-show'); }, 3000);
+  }
+
+  // Helpers
+  function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+  function formatDate(s) {
+    if (!s) return '-';
+    try { return new Date(s).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }); } catch { return s; }
+  }
+
+  // Set today's date as default
+  document.getElementById('tanggal').valueAsDate = new Date();
+
+  lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9fc75966537c1658',t:'MTc3ODkwMjcwMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
